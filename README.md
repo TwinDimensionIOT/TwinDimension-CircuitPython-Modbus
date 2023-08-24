@@ -1,20 +1,19 @@
-# MicroPython Modbus library
+# CircuitPython Modbus library
 
-[![Downloads](https://pepy.tech/badge/micropython-modbus)](https://pepy.tech/project/micropython-modbus)
-![Release](https://img.shields.io/github/v/release/brainelectronics/micropython-modbus?include_prereleases&color=success)
-![MicroPython](https://img.shields.io/badge/micropython-Ok-green.svg)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/brainelectronics/micropython-modbus/actions/workflows/release.yml/badge.svg)](https://github.com/brainelectronics/micropython-modbus/actions/workflows/release.yml)
-[![Test Python package](https://github.com/brainelectronics/micropython-modbus/actions/workflows/test.yml/badge.svg)](https://github.com/brainelectronics/micropython-modbus/actions/workflows/test.yml)
-[![Documentation Status](https://readthedocs.org/projects/micropython-modbus/badge/?version=latest)](https://micropython-modbus.readthedocs.io/en/latest/?badge=latest)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-MicroPython ModBus TCP and RTU library supporting client and host mode
+CircuitPython ModBus TCP and RTU library supporting client and host mode
 
+>ToDo
+>* general cleanup (project divergence / micropython incompatibility)
+>* update test cases
+>* update docs
+>* ...
 ---------------
 
 ## General
 
-Forked from [Exo Sense Py][ref-sferalabs-exo-sense], based on
+Forked from [micropython-modbus][ref-brainelectronics-micropython-modbus], based on
 [PyCom Modbus][ref-pycom-modbus] and extended with other functionalities to
 become a powerfull MicroPython library
 
@@ -208,6 +207,7 @@ of this library.
 * **pfalcon** - *Initial MicroPython unittest module* - [micropython-unittest][ref-pfalcon-unittest]
 
 <!-- Links -->
+[ref-brainelectronics-micropython-modbus]: https://github.com/brainelectronics/micropython-modbus
 [ref-sferalabs-exo-sense]: https://github.com/sfera-labs/exo-sense-py-modbus
 [ref-pycom-modbus]: https://github.com/pycom/pycom-modbus
 [ref-rtd-micropython-modbus]: https://micropython-modbus.readthedocs.io/en/latest/

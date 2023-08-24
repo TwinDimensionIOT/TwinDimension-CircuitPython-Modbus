@@ -9,10 +9,11 @@
 #
 
 # system packages
-from machine import UART
-from machine import Pin
+from digitalio import DigitalInOut, Direction
+from busio import UART
+    
 import struct
-import time
+from . import time_ex
 
 # custom packages
 from . import const as Const
@@ -29,98 +30,113 @@ class ModbusRTU(Modbus):
     """
     Modbus RTU client class
 
-    :param      addr:        The address of this device on the bus
-    :type       addr:        int
-    :param      baudrate:    The baudrate, default 9600
-    :type       baudrate:    int
-    :param      data_bits:   The data bits, default 8
-    :type       data_bits:   int
-    :param      stop_bits:   The stop bits, default 1
-    :type       stop_bits:   int
-    :param      parity:      The parity, default None
-    :type       parity:      Optional[int]
-    :param      pins:        The pins as list [TX, RX]
-    :type       pins:        List[Union[int, Pin], Union[int, Pin]]
-    :param      ctrl_pin:    The control pin
-    :type       ctrl_pin:    int
-    :param      uart_id:     The ID of the used UART
-    :type       uart_id:     int
+    :param      tx_pin:           The tx pin
+    :type       tx_pin:           int
+    :param      rx_pin:           The rx pin
+    :type       rx_pin:           int
+    :param      addr:             The address of this device on the bus
+    :type       addr:             int
+    :param      baudrate:         The baudrate, default 9600
+    :type       baudrate:         int
+    :param      data_bits:        The data bits, default 8
+    :type       data_bits:        int
+    :param      stop_bits:        The stop bits, default 1
+    :type       stop_bits:        int
+    :param      parity:           The parity, default None
+    :type       parity:           Optional[int]
+    :param      de_not_re_pin:    The control pin
+    :type       de_not_re_pin:    int
+    :param      re_de_delay:    
+    :type       re_de_delay:      int
+    :param      de_re_delay:
+    :type       de_re_delay:      int
     """
     def __init__(self,
-                 addr: int,
+                 tx_pin: int = None,
+                 rx_pin: int = None,
+                 addr: int = 1,
                  baudrate: int = 9600,
                  data_bits: int = 8,
                  stop_bits: int = 1,
                  parity: Optional[int] = None,
-                 pins: List[Union[int, Pin], Union[int, Pin]] = None,
-                 ctrl_pin: int = None,
-                 uart_id: int = 1):
+                 de_not_re_pin: int = None,
+                 re_de_delay: int = 200,
+                 de_re_delay: int = 100):
         super().__init__(
             # set itf to Serial object, addr_list to [addr]
-            Serial(uart_id=uart_id,
+            Serial(tx_pin=tx_pin,
+                   rx_pin=rx_pin,
                    baudrate=baudrate,
                    data_bits=data_bits,
                    stop_bits=stop_bits,
                    parity=parity,
-                   pins=pins,
-                   ctrl_pin=ctrl_pin),
+                   de_not_re_pin=de_not_re_pin,
+                   re_de_delay=re_de_delay,
+                   de_re_delay=de_re_delay),                   
             [addr]
         )
 
 
 class Serial(CommonModbusFunctions):
     def __init__(self,
-                 uart_id: int = 1,
+                 tx_pin: int = None,
+                 rx_pin: int = None,
                  baudrate: int = 9600,
                  data_bits: int = 8,
                  stop_bits: int = 1,
                  parity=None,
-                 pins: List[Union[int, Pin], Union[int, Pin]] = None,
-                 ctrl_pin: int = None):
+                 de_not_re_pin: int = None,
+                 re_de_delay: int = 200,
+                 de_re_delay: int = 100):
         """
         Setup Serial/RTU Modbus
 
-        :param      uart_id:     The ID of the used UART
-        :type       uart_id:     int
-        :param      baudrate:    The baudrate, default 9600
-        :type       baudrate:    int
-        :param      data_bits:   The data bits, default 8
-        :type       data_bits:   int
-        :param      stop_bits:   The stop bits, default 1
-        :type       stop_bits:   int
-        :param      parity:      The parity, default None
-        :type       parity:      Optional[int]
-        :param      pins:        The pins as list [TX, RX]
-        :type       pins:        List[Union[int, Pin], Union[int, Pin]]
-        :param      ctrl_pin:    The control pin
-        :type       ctrl_pin:    int
+        :param      tx_pin:           The tx pin
+        :type       tx_pin:           int
+        :param      rx_pin:           The rx pin
+        :type       rx_pin:           int
+        :param      baudrate:         The baudrate, default 9600
+        :type       baudrate:         int
+        :param      data_bits:        The data bits, default 8
+        :type       data_bits:        int
+        :param      stop_bits:        The stop bits, default 1
+        :type       stop_bits:        int
+        :param      parity:           The parity, default None
+        :type       parity:           Optional[int]
+        :param      de_not_re_pin:    The control pin
+        :type       de_not_re_pin:    int
+        :param      re_de_delay:    
+        :type       re_de_delay:      int
+        :param      de_re_delay:
+        :type       de_re_delay:      int        
         """
-        # UART flush function is introduced in Micropython v1.20.0
-        self._has_uart_flush = callable(getattr(UART, "flush", None))
-        self._uart = UART(uart_id,
+        self._uart = UART(tx=tx_pin,
+                          rx=rx_pin,
+                          rs485_dir= de_not_re_pin if de_not_re_pin is not None and (re_de_delay is None and de_re_delay is None) else None,
+                          rs485_invert=False,
                           baudrate=baudrate,
                           bits=data_bits,
                           parity=parity,
-                          stop=stop_bits,
-                          # timeout_chars=2,  # WiPy only
-                          # pins=pins         # WiPy only
-                          tx=pins[0],
-                          rx=pins[1]
-                          )
-
-        if ctrl_pin is not None:
-            self._ctrlPin = Pin(ctrl_pin, mode=Pin.OUT)
+                          stop=stop_bits)
+                     
+        self._re_de_delay = re_de_delay
+        self._de_re_delay = de_re_delay
+        
+        if de_not_re_pin is None or (re_de_delay is None and de_re_delay is None):
+            self._de_not_re_pin = None
         else:
-            self._ctrlPin = None
-
+            self._de_not_re_pin = DigitalInOut(de_not_re_pin)
+            self._de_not_re_pin.switch_to_output()
+            self._de_not_re_pin.value = False
+            
         # timing of 1 character in microseconds (us)
-        self._t1char = (1000000 * (data_bits + stop_bits + 2)) // baudrate
+        self._t1char = 1000000 * (data_bits + stop_bits + 2) // baudrate
 
         # inter-frame delay in microseconds (us)
         # - <= 19200 bps: 3.5x timing of 1 character
         # - > 19200 bps: 1750 us
         if baudrate <= 19200:
-            self._inter_frame_delay = (self._t1char * 3500) // 1000
+            self._inter_frame_delay = 3500 * self._t1char / 1000
         else:
             self._inter_frame_delay = 1750
 
@@ -165,7 +181,7 @@ class Serial(CommonModbusFunctions):
 
         return True
 
-    def _uart_read(self) -> bytearray:
+    def _uart_read(self, response_timeout: int = 1) -> bytearray:
         """
         Read incoming slave response from UART
 
@@ -173,22 +189,21 @@ class Serial(CommonModbusFunctions):
         :rtype:     bytearray
         """
         response = bytearray()
-
-        # TODO: use some kind of hint or user-configurable delay
-        #       to determine this loop counter
-        for x in range(1, 120):
-            if self._uart.any():
-                # WiPy only
-                # response.extend(self._uart.readall())
-                response.extend(self._uart.read())
-
-                # variable length function codes may require multiple reads
-                if self._exit_read(response):
-                    break
-
-            # wait for the maximum time between two frames
-            time.sleep_us(self._inter_frame_delay)
-
+                  
+        # first byte with response_timeout
+        self._uart.timeout = response_timeout
+        
+        r = self._uart.read(1)  # read / wait for first
+        if r is not None:
+            # append the new read stuff to the buffer
+            response.extend(r)
+            
+            # next byte's with inter_frame_delay
+            self._uart.timeout = self._inter_frame_delay / 1e6  # in seconds
+            r = self._uart.read()  # read / wait for next
+            if r is not None:
+                response.extend(r)
+            
         return response
 
     def _uart_read_frame(self, timeout: Optional[int] = None) -> bytearray:
@@ -202,42 +217,25 @@ class Serial(CommonModbusFunctions):
         :rtype:     bytearray
         """
         received_bytes = bytearray()
-
+        
         # set default timeout to at twice the inter-frame delay
         if timeout == 0 or timeout is None:
-            timeout = 2 * self._inter_frame_delay  # in microseconds
+            timeout = 2 * self._inter_frame_delay / 1e6  # in seconds
+        self._uart.timeout = timeout
+        
+        r = self._uart.read(1)  # read / wait for first byte
+        if r is not None:
+            # append the new read stuff to the buffer
+            received_bytes.extend(r)
+            
+            # next byte's with frame_timeout
+            self._uart.timeout = self._inter_frame_delay / 1e6  # in seconds
+            r = self._uart.read()  # read / wait for next byte's
+            if r is not None:
+                received_bytes.extend(r)
 
-        start_us = time.ticks_us()
-
-        # stay inside this while loop at least for the timeout time
-        while (time.ticks_diff(time.ticks_us(), start_us) <= timeout):
-            # check amount of available characters
-            if self._uart.any():
-                # remember this time in microseconds
-                last_byte_ts = time.ticks_us()
-
-                # do not stop reading and appending the result to the buffer
-                # until the time between two frames elapsed
-                while time.ticks_diff(time.ticks_us(), last_byte_ts) <= self._inter_frame_delay:
-                    # WiPy only
-                    # r = self._uart.readall()
-                    r = self._uart.read()
-
-                    # if something has been read after the first iteration of
-                    # this inner while loop (within self._inter_frame_delay)
-                    if r is not None:
-                        # append the new read stuff to the buffer
-                        received_bytes.extend(r)
-
-                        # update the timestamp of the last byte being read
-                        last_byte_ts = time.ticks_us()
-
-            # if something has been read before the overall timeout is reached
-            if len(received_bytes) > 0:
-                return received_bytes
-
-        # return the result in case the overall timeout has been reached
         return received_bytes
+
 
     def _send(self, modbus_pdu: bytes, slave_addr: int) -> None:
         """
@@ -257,12 +255,12 @@ class Serial(CommonModbusFunctions):
         modbus_adu.extend(modbus_pdu)
         modbus_adu.extend(self._calculate_crc16(modbus_adu))
 
-        if self._ctrlPin:
-            self._ctrlPin.on()
+        if self._de_not_re_pin is not None:
+            self._de_not_re_pin.value = True
             # wait until the control pin really changed
             # 85-95us (ESP32 @ 160/240MHz)
-            time.sleep_us(200)
-
+            time_ex.sleep_us(self._re_de_delay)
+            
         # the timing of this part is critical:
         # - if we disable output too early,
         #   the command will not be received in full
@@ -270,24 +268,17 @@ class Serial(CommonModbusFunctions):
         #   the incoming response will lose some data at the beginning
         # easiest to just wait for the bytes to be sent out on the wire
 
-        send_start_time = time.ticks_us()
+        send_start_time = time_ex.ticks_us()
         # 360-400us @ 9600-115200 baud (measured) (ESP32 @ 160/240MHz)
         self._uart.write(modbus_adu)
-        send_finish_time = time.ticks_us()
 
-        if self._has_uart_flush:
-            self._uart.flush()
-            time.sleep_us(self._t1char)
-        else:
-            sleep_time_us = (
-                self._t1char * len(modbus_adu) -    # total frame time in us
-                time.ticks_diff(send_finish_time, send_start_time) +
-                100     # only required at baudrates above 57600, but hey 100us
-            )
-            time.sleep_us(sleep_time_us)
+        if self._de_not_re_pin is not None:
+            sleep_time_us = self._t1char * len(modbus_adu) + self._de_re_delay # total frame time in us + de_re_delay
+            sleep_time_us -= time_ex.ticks_us() - send_start_time
+            if sleep_time_us > 0:
+                time_ex.sleep_us(sleep_time_us)
+            self._de_not_re_pin.value = False
 
-        if self._ctrlPin:
-            self._ctrlPin.off()
 
     def _send_receive(self,
                       modbus_pdu: bytes,
@@ -454,3 +445,5 @@ class Serial(CommonModbusFunctions):
             return None
 
         return request
+
+

@@ -13,7 +13,7 @@ This class is inherited by the Modbus client implementations
 """
 
 # system packages
-import time
+from . import time_ex
 
 # custom packages
 from . import functions
@@ -780,10 +780,10 @@ class Modbus(object):
         if reg_type in self._changeable_register_types:
             if isinstance(value, (list, tuple)):
                 for idx, val in enumerate(value):
-                    content = {'val': val, 'time': time.ticks_ms()}
+                    content = {'val': val, 'time': time_ex.ticks_ms()}
                     self._changed_registers[reg_type][address + idx] = content
             else:
-                content = {'val': value, 'time': time.ticks_ms()}
+                content = {'val': value, 'time': time_ex.ticks_ms()}
                 self._changed_registers[reg_type][address] = content
         else:
             raise KeyError('{} can not be changed externally'.format(reg_type))

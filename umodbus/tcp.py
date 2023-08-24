@@ -12,7 +12,7 @@
 # import random
 import struct
 import socket
-import time
+from . import time_ex
 
 # custom packages
 from . import functions
@@ -399,7 +399,7 @@ class TCPServer(object):
             raise Exception('Modbus TCP server not bound')
 
         if timeout > 0:
-            start_ms = time.ticks_ms()
+            start_ms = time_ex.ticks_ms()
             elapsed = 0
             while True:
                 if self._client_sock is None:
@@ -409,7 +409,7 @@ class TCPServer(object):
                 req = self._accept_request(accept_timeout, unit_addr_list)
                 if req:
                     return req
-                elapsed = time.ticks_diff(start_ms, time.ticks_ms())
+                elapsed = time_ex.ticks_diff(start_ms, time_ex.ticks_ms())
                 if elapsed > timeout:
                     return None
         else:
