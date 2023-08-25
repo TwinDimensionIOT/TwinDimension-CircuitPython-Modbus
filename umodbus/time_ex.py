@@ -1,16 +1,32 @@
 import time
+import microcontroller
+import supervisor
+from micropython import const
 
 def sleep_us(us : int):
-    time.sleep(us / 1000000)
+    microcontroller.delay_us(us)
     
 def sleep_ms(ms : int):
-    time.sleep(ms / 1000)
-    
+    microcontroller.delay_us(ms * 1000)
+
 def ticks_us():
-    return time.monotonic_ns() / 1000
+    if time.monotonic_ns:
+        return time.monotonic_ns() // 1000
+    else:
+        raise OSError('time.monotonic_ns not found: microseconds ticks cannot be ensured')
 
 def ticks_ms():
-    return time.monotonic_ns() / 1000000
+    if time.monotonic_ns:
+        return time.monotonic_ns() // 1000000
+    else:
+        return supervisor.ticks_ms()
 
-def ticks_diff(start : int, end : int) -> int:
-    return start - end
+_TICKS_PERIOD = const(1<<29)
+_TICKS_MAX = const(_TICKS_PERIOD-1)
+_TICKS_HALFPERIOD = const(_TICKS_PERIOD//2)
+
+def ticks_diff(ticks1, ticks2):
+    "Compute the signed difference between two ticks values, assuming that they are within 2**28 ticks"
+    diff = (ticks1 - ticks2) & _TICKS_MAX
+    diff = ((diff + _TICKS_HALFPERIOD) & _TICKS_MAX) - _TICKS_HALFPERIOD
+    return diff
