@@ -1,5 +1,7 @@
 # CircuitPython Modbus library
 
+[![Discord](https://img.shields.io/discord/1016500444379496478)](https://discord.com/channels/1016500444379496478)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?logo=linkedin&logoColor=white)](https://www.linkedin.com/company/twindimension)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 CircuitPython ModBus TCP and RTU library supporting client and host mode
